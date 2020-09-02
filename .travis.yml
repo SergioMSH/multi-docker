@@ -1,0 +1,23 @@
+sudo: required
+language: generic
+services:
+    - docker
+
+before_install:
+    - docker build -t smshss/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true smshss/react-test npm test
+
+after_success:
+    - docker build -t smshss/multi-client ./client
+    - docker build -t smshss/multi-nginx ./nginx
+    - docker build -t smshss/multi-server ./server
+    - docker build -t smshss/multi-worker ./worker
+    # Login to the Docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to Docker Hub
+    - docker push smshss/multi-client
+    - docker push smshss/multi-nginx
+    - docker push smshss/multi-server
+    - docker push smshss/multi-worker
